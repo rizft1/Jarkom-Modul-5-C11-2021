@@ -73,6 +73,10 @@ Keterangan:
 - `--connlimit-mask 0`: Hanya memperbolehkan 3 koneksi setiap subnet dalam satu waktu
 - `-j DROP`: Paket di-drop
 
+Testing dapat dilakukan dengan cara sebagai berikut:
+- Masuk ke 4 node yang berbeda
+- Kemudian, melakukan ping ke arah Jipangu secara bersamaan
+
 ### 4.
 
 ### 5.
