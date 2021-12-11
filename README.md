@@ -32,3 +32,17 @@ cek routing
 ```
 route -n
 ```
+
+### D. Tugas berikutnya adalah memberikan ip pada subnet Blueno, Cipher, Fukurou, dan Elena secara dinamis menggunakan bantuan DHCP server. Kemudian kalian ingat bahwa kalian harus setting DHCP Relay pada router yang menghubungkannya.
+
+Jalankan ```nano /etc/network/interfaces```
+Kemudian lakukan 
+
+```
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+```
