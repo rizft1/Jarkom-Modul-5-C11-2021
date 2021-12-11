@@ -15,6 +15,8 @@
 ![topo](https://user-images.githubusercontent.com/62735317/145663435-a56eab01-12df-47ee-935c-afb3d85bbd11.png)
 
 ### B. Karena kalian telah belajar subnetting dan routing, Luffy ingin meminta kalian untuk membuat topologi tersebut menggunakan teknik CIDR atau VLSM.
+![image](https://user-images.githubusercontent.com/74702068/145667980-99fa5d59-698a-4b61-b77d-8e3f3f46f3dc.png)
+![image](https://user-images.githubusercontent.com/74702068/145667995-839d2867-385c-4147-8fe2-791ce876e672.png)
 
 ### C. Kalian juga diharuskan melakukan Routing agar setiap perangkat pada jaringan tersebut dapat terhubung
 ```
