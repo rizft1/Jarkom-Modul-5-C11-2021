@@ -50,13 +50,47 @@ iface eth0 inet dhcp
 
 ```
 
-### 1.
+### 1. Agar topologi yang kalian buat dapat mengakses keluar, kalian diminta untuk mengkonfigurasi Foosha menggunakan iptables, tetapi Luffy tidak ingin menggunakan MASQUERADE.
 
-### 2.
+Foosha
+```
+iptables -t nat -A POSTROUTING -s 10.18.0.0/20 -o eth0 -j SNAT --to-source 192.168.122.25
+```
+
+Keterangan:
+- `-t nat`: Menggunakan tabel NAT karena akan mengubah alamat asal dari paket
+- `-A POSTROUTING`: Menggunakan chain POSTROUTING karena mengubah asal paket setelah routing
+- `-s 10.18.0.0/20`: Mendifinisikan alamat asal dari paket yaitu semua alamat IP dari subnet 10.18.0.0/20
+- `-o eth0`: Paket keluar dari eth0 Foosha
+- `-j SNAT`: Menggunakan target SNAT untuk mengubah source atau alamat asal dari paket
+- `--to-s (ip eth0)`: Mendefinisikan IP source, di mana digunakan eth0 Foosha dengan IP 192.168.122.25
+
+Testing dapat dilakukan dengan cara sebagai berikut:
+- Masukkan command `ip a` pada Foosha untuk mengetahui eth0, ip eth0 akan selalu berganti ketika restart node pada foosha atau restart GNS3 dengan rentang IP yang sudah dijelaskan
+
+### 2. Kalian diminta untuk mendrop semua akses HTTP dari luar Topologi kalian pada server yang merupakan DHCP Server dan DNS Server demi menjaga keamanan.
+
+Jipangu dan Doriki
+```
+iptables -A FORWARD -d 10.18.4.128/29 -i eth0 -p tcp --dport 80 -j DROP
+```
+
+Keterangan:
+- `-A FORWARD`: Menggunakan chain FORWARD
+- `-d 10.18.4.128/29`: Mendefinisikan alamat tujuan dari paket (DHCP dan DNS SERVER ) berada pada subnet 10.18.4.128/29
+- `-i eth0`: Paket masuk dari eth0 Foosha
+- `-p tcp`: Mendefinisikan protokol yang digunakan, yaitu tcp
+- `--dport 80`: Mendefinisikan port yang digunakan, yaitu 80 (HTTP)
+- `-j DROP`: Paket di-drop
+
+Testing dapat dilakukan dengan cara sebagai berikut:
+- Install netcat di server Jipangu dan Doriki menggunakan command `apt-get install netcat -y`
+- Pada Jipangu dan Doriki masukkan command `nc -l -p 80`
+- Lalu, pada Foosha masukkan command berikut `nmap -p 80 10.18.4.130` atau `nmap -p 80 10.18.4.131`
 
 ### 3. Karena kelompok kalian maksimal terdiri dari 3 orang. Luffy meminta kalian untuk membatasi DHCP dan DNS Server hanya boleh menerima maksimal 3 koneksi ICMP secara bersamaan menggunakan iptables, selebihnya didrop.
 
-Pada Doriki dan Jipangu
+Doriki dan Jipangu
 ```
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p icmp -m connlimit --connlimit-above 3 --connlimit-mask 0 -j DROP
@@ -71,14 +105,94 @@ Keterangan:
 - `-m connlimit`: Menggunakan rule connection limit
 - `--connlimit-above 3`: Limit yang ditangkap paket adalah di atas 3
 - `--connlimit-mask 0`: Hanya memperbolehkan 3 koneksi setiap subnet dalam satu waktu
-- `-j DROP`: Paket di-drop
+- `-j ACCEPT`: Paket diterima
+- `-j DROP`: Paket didrop
 
 Testing dapat dilakukan dengan cara sebagai berikut:
 - Masuk ke 4 node yang berbeda
 - Kemudian, melakukan ping ke arah Jipangu secara bersamaan
 
-### 4.
+### 4. Akses dari subnet Blueno dan Cipher hanya diperbolehkan pada pukul 07.00 - 15.00 pada hari Senin sampai Kamis.
 
-### 5.
+Doriki
 
-### 6.
+Paket yang berasal dari Blueno
+```
+iptables -A INPUT -s 10.18.0.0/22 -d 10.18.4.128/29 -m time --timestart 07:00 --timestop 15:00 --weekdays Mon,Tue,Wed,Thu -j ACCEPT
+iptables -A INPUT -s 10.18.0.0/22 -j REJECT
+```
+
+Paket yang berasal dari Cipher
+```
+iptables -A INPUT -s 10.18.4.0/25 -d 10.18.4.128/29 -m time --timestart 07:00 --timestop 15:00 --weekdays Mon,Tue,Wed,Thu -j ACCEPT
+iptables -A INPUT -s 10.18.4.0/25 -j REJECT
+```
+
+Keterangan:
+- `-A INPUT`: Menggunakan chain INPUT
+- `-s 10.18.0.0/22`: Mendifinisikan alamat asal dari paket yaitu IP dari subnet Blueno
+- `-s 10.18.4.0/25`: Mendifinisikan alamat asal dari paket yaitu IP dari subnet Cipher
+- `-d 10.18.4.128/29`: Mendifinisikan alamat tujuan dari paket yaitu IP dari subnet Doriki
+- `-m time`: Menggunakan rule time
+- `--timestart 07:00`: Mendefinisikan waktu mulai yaitu 07:00
+- `--timestop 15:00`: Mendefinisikan waktu berhenti yaitu 15:00
+- `--weekdays Mon,Tue,Wed,Thu`: Mendefinisikan hari yaitu Senin hingga Kamis
+- `-j ACCEPT`: Paket diterima
+- `-j REJECT`: Paket ditolak
+
+Testing dapat dilakukan dengan cara sebagai berikut: <br />
+Ubah waktu menggunakan command sebagai berikut pada Doriki. Kemudian, lakukan `ping google.com` pada client yang aksesnya diperbolehkan atau tidak diperbolehkan
+- `date -s "8 nov 2021 10:00:00"`
+- `date -s "8 nov 2021 17:00:00"`
+
+### 5. Akses dari subnet Elena dan Fukuro hanya diperbolehkan pada pukul 15.01 hingga pukul 06.59 setiap harinya.
+
+Doriki
+
+Paket yang berasal dari Elena
+```
+iptables -A INPUT -s 10.18.10.0/23 -m time --timestart 15:01 --timestop 06:59 -j ACCEPT
+iptables -A INPUT -s 10.18.10.0/23 -j REJECT
+```
+
+Paket yang berasal dari Fukurou
+```
+iptables -A INPUT -s 10.18.8.0/24 -m time --timestart 15:01 --timestop 06:59 -j ACCEPT
+iptables -A INPUT -s 10.18.8.0/24 -j REJECT
+```
+
+Keterangan:
+- `-A INPUT`: Menggunakan chain INPUT
+- `-s 10.18.10.0/23`: Mendifinisikan alamat asal dari paket yaitu IP dari subnet Elena
+- `-s 10.18.8.0/24`: Mendifinisikan alamat asal dari paket yaitu IP dari subnet Fukurou
+- `-m time`: Menggunakan rule time
+- `--timestart 15:01`: Mendefinisikan waktu mulai yaitu 15:01
+- `--timestop 06:59`: Mendefinisikan waktu berhenti yaitu 06:59
+- `--weekdays Mon,Tue,Wed,Thu`: Mendefinisikan hari yaitu Senin hingga Kamis
+- `-j ACCEPT`: Paket diterima
+- `-j REJECT`: Paket ditolak
+
+Testing dapat dilakukan dengan cara sebagai berikut: <br />
+Ubah waktu menggunakan command sebagai berikut pada Doriki. Kemudian, lakukan `ping google.com` pada client yang aksesnya diperbolehkan atau tidak diperbolehkan
+- `date -s "8 nov 2021 10:00:00"`
+- `date -s "8 nov 2021 17:00:00"`
+
+### 6. Karena kita memiliki 2 Web Server, Luffy ingin Guanhao disetting sehingga setiap request dari client yang mengakses DNS Server akan didistribusikan secara bergantian pada Jorge dan Maingate
+
+Guanhao
+
+Masukkan command
+```
+iptables -A PREROUTING -t nat -p tcp -d 10.18.4.128 --dport 80 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination  10.18.9.2:80
+iptables -A PREROUTING -t nat -p tcp -d 10.18.4.128 --dport 80 -j DNAT --to-destination 10.18.9.3:80
+iptables -t nat -A POSTROUTING -p tcp -d 10.18.9.2 --dport 80 -j SNAT --to-source 10.18.4.128:80
+iptables -t nat -A POSTROUTING -p tcp -d 10.18.9.3 --dport 80 -j SNAT --to-source 10.18.4.128:80
+```
+
+Testing dapat dilakukan dengan cara sebagai berikut:
+- Pada Guanhao, Jorge, Maingate dan Elena gunakan command instal `apt-get install netcat -y`
+- Pada Jorge masukkan command `nc -l -p 80`
+- Pada Maingate masukkan command `nc -l -p 80`
+- Pada client Elena masukkan command `nc 10.18.4.128 80`
+- Hasil akan muncul di salah satu webserver
+- Masukkan command `nc 10.18.4.128 80` pada Elena, hasil akan keluar di server kedua
