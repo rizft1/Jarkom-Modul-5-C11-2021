@@ -49,3 +49,32 @@ auto eth0
 iface eth0 inet dhcp
 
 ```
+
+### 1.
+
+### 2.
+
+### 3. Karena kelompok kalian maksimal terdiri dari 3 orang. Luffy meminta kalian untuk membatasi DHCP dan DNS Server hanya boleh menerima maksimal 3 koneksi ICMP secara bersamaan menggunakan iptables, selebihnya didrop.
+
+Pada Doriki dan Jipangu
+```
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p icmp -m connlimit --connlimit-above 3 --connlimit-mask 0 -j DROP
+```
+
+Keterangan:
+- `-A INPUT`: Menggunakan chain INPUT
+- `-m state --state`: Menambahkan konfigurasi/kondisi pada iptables
+- `ESTABLISHED`: kondisi dimana paket sudah berpergian antara source dan destination
+- `RELATED`: kondisi dimana paket akan menginisiasi lagi koneksi baru tapi masih related dengan koneksi existing
+- `-p icmp`: Mendefinisikan protokol yang digunakan, yaitu ICMP (ping)
+- `-m connlimit`: Menggunakan rule connection limit
+- `--connlimit-above 3`: Limit yang ditangkap paket adalah di atas 3
+- `--connlimit-mask 0`: Hanya memperbolehkan 3 koneksi setiap subnet dalam satu waktu
+- `-j DROP`: Paket di-drop
+
+### 4.
+
+### 5.
+
+### 6.
